@@ -1,9 +1,10 @@
 # Crunchyviewer
 Wrapper script for liveviewer. Solely purpose is to view crunchyroll's videos. 
 
-Liveviewer is required for running this script. Should work fine within linux or windows. Check comments in code for details.
+Usage: crunchyviewer.py <series-name>, or without any parameters
 
-On next release:
-  - Separate configuration file, for declaring some additional options (such as. player, quality and so on.. ) 
-  - Tinydb for storing episode urls
-  - Case insensitive series searching
+22.12.2016: Added separate configuration file for setting up livestreamer executable path, separate player and defining quality.
+            as well added support for running crunchyviewer with series-name. 
+            
+            
+Upcoming:  livestreamer API usage, so that crunchyviewer can work just as standalone 'application', without relying on external executable.
