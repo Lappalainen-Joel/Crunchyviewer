@@ -1,21 +1,40 @@
-#!/usr/env/python
 from requests import get
 from subprocess import call
 from bs4 import BeautifulSoup
 from sys import argv
-from configparser import ConfigParser, NoOptionError
+from configparser import ConfigParser, NoOptionError, NoSectionError
+from livestreamer import PluginError, streams
+from json import loads
 
 cfg = ConfigParser()
-cfg.read('crunchyconfig.ini')
-pr = cfg.get('crunchy-settings', 'pr')
-qa = cfg.get('crunchy-settings', 'qa')
-ar = cfg.get('crunchy-settings', 'ar')
 url = "http://www.crunchyroll.com"
+
+try:
+    cfg.read('crunchyconfig.ini')
+except NoSectionError:
+    print("Configuration file missing. Exiting")
+    exit(1)
+
+try:
+    qa = cfg.get('crunchy-settings', 'qa')
+except NoOptionError:
+    print("Cannot read required parameters from configuration file. Exiting")
+    exit(1)
+
+try:
+    qu = cfg.get('crunchy-settings', 'qu')
+except NoOptionError:
+    qu = "0"
+
+
+def debug(err):
+    if qu != "0":
+        print(err)
 
 try:
     cfg.get('crunchy-settings', 'pl')
 except NoOptionError:
-    print("No player set, using default one (VLC).")
+    debug("No player set, using default one (VLC).")
 else:
     pl = cfg.get('crunchy-settings', 'pl')
 
@@ -30,11 +49,11 @@ def listseries(na):
             u = pu[0].get("href")
             return u
         elif len(pu) > 1:
-            print("Too many matches found, be more specific")
-            exit(0)
+            debug("Too many matches found, be more specific")
+            exit(1)
         else:
-            print("Not found, try again")
-            exit(0)
+            debug("Not found, try again")
+            exit(1)
 
 
 def listepisodes(se):
@@ -67,19 +86,67 @@ def selectepisode(ep):
 
 
 def playepisode(en):
+        call(pl + " " + en)
+
+
+def getStreams(url, qa):
+    print(url)
     try:
-        pl
-    except:
-        # This horrible creation was done because subprocess didn't understand 'ar' paramater as a separate parameter.
-        # subprocess.call(pr,url+en,qa,ar)
-        call(pr + " " + " " + url + en + " " + qa + " " + ar)
+        streams(url)
+    except PluginError as e:
+        val = str(e)
     else:
-        call(pr + " " + "-p " + pl + " " + url + en + " " + qa + " " + ar)
+        ste = streams(url)
+        return ste[qa]
+    try:
+        val
+    except NameError:
+        debug("This should not ever trigger.")
+    else:
+        debug("Catched PluginError. Let's try to get the url for " + qa + " -Quality")
+        val = cleanJSON(val)
+        val = parseJSON(val)
+        return val
+
+
+def cleanJSON(v):
+    v = v[56:]
+    v = v[:-137]
+    v = v.replace("'", '"')
+    v = v.replace('None', '"None"')
+    v = "{" + v + "}"
+    return v
+
+
+def parseJSON(u):
+    qua_list = [" ", "low", "mid", "high", "ultra"]
+    d = loads(u)
+    for i in d['stream_data']['streams']:
+        if i['quality'] == qa:
+            return i['url']
+    print("Quality not found with '" + qa + "' -quality. Trying to find other qualities, and using highest quality among them.")
+    qua = 0
+    for i in d['stream_data']['streams']:
+        if i['quality'] == 'ultra':
+            qua = 4
+        elif i['quality'] == 'high' and qua < 3:
+            qua = 3
+        elif i['quality'] == 'mid' and qua < 2:
+            qua = 2
+        elif i['quality'] == 'low' and qua < 1:
+            qua = 1
+    if qua == 0:
+        print("No qualities detected. Exiting")
+        exit(1)
+    for i in d['stream_data']['streams']:
+        if i['quality'] == qua_list[qua]:
+            print(i['quality'])
+            return i['url']
 
 
 def main():
     if len(argv) > 2:
-        print("Too many arguments")
+        debug("Too many arguments")
         exit(0)
 
     elif len(argv) == 1:
@@ -91,7 +158,9 @@ def main():
     v = listseries(a)
     v2 = listepisodes(v)
     v3 = selectepisode(v2)
-    playepisode(v3)
+    v4 = getStreams(url + v3, qa)
+    playepisode(v4)
 
 
 main()
+
