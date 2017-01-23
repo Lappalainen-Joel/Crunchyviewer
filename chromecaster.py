@@ -13,11 +13,11 @@ except NoOptionError:
 
 def debug(num):
 	err_list = {
-	01: "chromecast_name missing. Resuming",
-	02: "chromecast_IP missing. Resuming",
-	11: "Chromecast not found. Check that you can connect to your chromecast",
-	21: "Set just either 'chromecast_name' or 'chromecast_ip', now both are defined.",
-	22: "'chromecast_name' and 'chromecast_ip' are not defined. Define either one. "
+	"01": "chromecast_name missing. Resuming",
+	"02": "chromecast_IP missing. Resuming",
+	"11": "Chromecast not found. Check that you can connect to your chromecast",
+	"21": "Set just either 'chromecast_name' or 'chromecast_ip', now both are defined.",
+	"22": "'chromecast_name' and 'chromecast_ip' are not defined. Define either one. "
 	}
 	if dbug == 1:
 		print(err_list[num])
@@ -26,7 +26,7 @@ def debug(num):
 try:
 	cfg.get('chromecast-settings', 'chromecast_name')
 except NoOptionError:
-	debug(01)
+	debug("01")
 	name = 0
 else:
 	cast = cfg.get('chromecast-settings', 'chromecast_name')
@@ -35,7 +35,7 @@ else:
 try:
 	cfg.get('chromecast-settings', 'chromecast_IP')
 except NoOptionError:
-	debug(02)
+	debug("02")
 	ip = 0
 else:
 	cast = cfg.get('chromecast-settings', 'chromecast_IP')
@@ -49,7 +49,7 @@ def castviaName(url, medtype):
 	if caster != None and caster != []:
 		stream(caster, url)
 	else:
-		debug(11)
+		debug("11")
 		exit(1)
 
 
@@ -58,7 +58,7 @@ def castviaIP(url, medtype):
 	if caster != None and caster != []:
 		stream(caster, url)
 	else:
-		debug(11)
+		debug("11")
 
 
 def stream(caster, url, medtype):
@@ -72,7 +72,7 @@ def main():
     
 
 	if ip == 1 and name == 1:
-		debug(21)
+		debug("21")
 		exit(1)
 
 	elif ip == 1:
@@ -81,7 +81,7 @@ def main():
 	elif name == 1:
 		castviaName(url, medtype)
 	else:
-		debug(22)
+		debug("22")
 		exit(1)
 
 
